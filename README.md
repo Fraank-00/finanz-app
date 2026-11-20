@@ -42,21 +42,23 @@ Si querés clonar y correr este proyecto en tu computadora, seguí estos pasos:
     
 ```bash
  1. Clonar el repositorio
-```bash
+
 git clone [https://github.com/TU_USUARIO/finanz-app.git](https://github.com/TU_USUARIO/finanz-app.git)
 cd finanz-app
 
 2 .Instalar dependencias
-Bash
+
 npm install
+
 3. Configurar las Variables de Entorno
 Crea un archivo llamado .env.local en la raíz del proyecto y añade tus credenciales de Supabase:
 
 Fragmento de código
 NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_llave_anonima_de_supabase
+
 4. Ejecutar el servidor de desarrollo
-Bash
+
 npm run dev
 Abre http://localhost:3000 en tu navegador para ver la aplicación funcionando.
 
@@ -91,9 +93,6 @@ cuenta_id (INT / FK a cuentas.id)
 
 📄 Licencia
 Este proyecto es de código abierto y está disponible bajo la Licencia MIT.
-
-
----
 
 <ElicitationsGroup message="Para cuando estés listo con tu repositorio:">
   <Elicitation label="Crear un archivo LICENSE de tipo MIT para tu repositorio de GitHub" query="Quiero generar el texto para un archivo LICENSE de tipo MIT para mi proyecto en GitHub."/>
