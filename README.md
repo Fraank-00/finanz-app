@@ -38,8 +38,10 @@ Una aplicación web moderna de gestión financiera personal desarrollada con tec
 
 Si querés clonar y correr este proyecto en tu computadora, seguí estos pasos:
 
- 1. Clonar el repositorio
+
     
+```bash
+ 1. Clonar el repositorio
 ```bash
 git clone [https://github.com/TU_USUARIO/finanz-app.git](https://github.com/TU_USUARIO/finanz-app.git)
 cd finanz-app
