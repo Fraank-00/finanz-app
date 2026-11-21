@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { cookies } from "next/headers";
 import { Wallet, TrendingUp, TrendingDown, Calendar, LayoutDashboard, PieChart, CreditCard, PlusCircle } from "lucide-react";
 import { GraficoFinanzas } from "@/components/GraficoFinanzas";
 import { ClientSideMovimientos } from "@/components/ClientSideMovimientos";
@@ -24,9 +25,42 @@ export interface Movimiento {
 export const instant = false;
 
 export default async function Home() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("finanz_session_id")?.value || "sin-sesion";
+
+  // 1. Cargar cuentas de esta sesión
+  let { data: cuentas, error: cuentasError } = await supabase
+    .from("cuentas")
+    .select("*")
+    .eq("session_id", sessionId);
+
+  if (cuentasError) {
+    console.error("Error al cargar cuentas:", cuentasError);
+  }
+
+  // Si es un visitante nuevo y tiene 0 cuentas, le creamos unas por defecto automáticamente
+  if (!cuentas || cuentas.length === 0) {
+    const cuentasDefault = [
+      { nombre: "Efectivo", tipo: "efectivo", color: "emerald", session_id: sessionId },
+      { nombre: "Mercado Pago", tipo: "digital", color: "sky", session_id: sessionId },
+      { nombre: "Banco", tipo: "banco", color: "blue", session_id: sessionId },
+    ];
+
+    const { data: nuevasCuentas } = await supabase
+      .from("cuentas")
+      .insert(cuentasDefault)
+      .select("*");
+
+    if (nuevasCuentas) {
+      cuentas = nuevasCuentas;
+    }
+  }
+
+  // 2. Cargar movimientos filtrados por la sesión del visitante
   const { data: movimientos, error } = await supabase
     .from("movimientos")
     .select("*")
+    .eq("session_id", sessionId)
     .order("fecha", { ascending: false });
 
   if (error) {
@@ -34,16 +68,8 @@ export default async function Home() {
   }
 
   const listaMovimientos = movimientos || [];
-
-  const { data: cuentas, error: cuentasError } = await supabase
-    .from("cuentas")
-    .select("*");
-
-  if (cuentasError) {
-    console.error("Error al cargar cuentas:", cuentasError);
-  }
-
   const listaCuentas: Cuenta[] = cuentas || [];
+
   const cuentasConSaldo = listaCuentas.map((cuenta) => {
     const movimientosCuenta = listaMovimientos.filter(
       (movimiento) => movimiento.cuenta_id === cuenta.id,
@@ -86,7 +112,7 @@ export default async function Home() {
   return (
     <main id="dashboard" className="min-h-screen bg-[#082F49] text-[#F0FDFF] p-6 md:p-12 font-sans pb-28 md:pb-12 relative overflow-hidden scroll-smooth">
       
-      {/* Destellos de luz ambiental basados en la paleta (#0E7490 y #22C55E) */}
+      {/* Destellos de luz ambiental */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#0E7490]/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-1/3 right-10 w-[400px] h-[400px] bg-[#22C55E]/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -212,7 +238,7 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Barra de navegación flotante inferior funcional (Scroll Suave) */}
+      {/* Barra de navegación flotante inferior */}
       <nav className="md:hidden fixed bottom-4 left-4 right-4 bg-[#082F49]/95 border border-[#BAE6FD]/30 backdrop-blur-xl px-6 py-3 rounded-2xl shadow-2xl flex justify-between items-center z-50">
         <a href="#dashboard" className="flex flex-col items-center gap-1 text-[#22C55E]">
           <LayoutDashboard className="w-5 h-5" />

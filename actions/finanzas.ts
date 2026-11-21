@@ -2,8 +2,20 @@
 
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+
+// Función auxiliar para obtener el session_id actual del visitante
+async function getSessionId() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("finanz_session_id")?.value;
+  if (!sessionId) {
+    throw new Error("Sesión no encontrada. Recargá la página.");
+  }
+  return sessionId;
+}
 
 export async function crearCuenta(formData: FormData) {
+  const session_id = await getSessionId();
   const nombre = formData.get("nombre");
   const tipo = formData.get("tipo");
   const color = formData.get("color");
@@ -22,6 +34,7 @@ export async function crearCuenta(formData: FormData) {
       nombre: nombre.trim(),
       tipo: tipo.trim(),
       color: typeof color === "string" && color ? color : "emerald",
+      session_id,
     },
   ]);
 
@@ -34,6 +47,7 @@ export async function crearCuenta(formData: FormData) {
 }
 
 export async function crearMovimiento(formData: FormData) {
+  const session_id = await getSessionId();
   const descripcion = formData.get("descripcion") as string;
   const monto = Number(formData.get("monto"));
   const tipo = formData.get("tipo") as "ingreso" | "gasto";
@@ -51,6 +65,7 @@ export async function crearMovimiento(formData: FormData) {
       tipo,
       categoria,
       cuenta_id,
+      session_id,
     },
   ]);
 
@@ -62,12 +77,14 @@ export async function crearMovimiento(formData: FormData) {
   revalidatePath("/");
 }
 
-// Eliminar un movimiento por su ID
+// Eliminar un movimiento por su ID y su sesión
 export async function eliminarMovimiento(id: number) {
+  const session_id = await getSessionId();
   const { error } = await supabase
     .from("movimientos")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("session_id", session_id);
 
   if (error) {
     console.error("Error al eliminar movimiento:", error);
@@ -77,8 +94,9 @@ export async function eliminarMovimiento(id: number) {
   revalidatePath("/");
 }
 
-// Editar un movimiento existente
+// Editar un movimiento existente validando la sesión
 export async function editarMovimiento(id: number, formData: FormData) {
+  const session_id = await getSessionId();
   const descripcion = formData.get("descripcion");
   const monto = Number(formData.get("monto"));
   const tipo = formData.get("tipo");
@@ -88,7 +106,8 @@ export async function editarMovimiento(id: number, formData: FormData) {
   const { error } = await supabase
     .from("movimientos")
     .update({ descripcion, monto, tipo, categoria, cuenta_id })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("session_id", session_id);
 
   if (error) {
     console.error("Error al editar movimiento:", error);
